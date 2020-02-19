@@ -31,14 +31,12 @@ def compute_solution(sat_assignment, variables, size):
     # TODO: Map the SAT assignment back into a Sudoku solution
     return solution
 
-
 def generate_theory(board, verbose):
     """ Generate the propositional theory that corresponds to the given board. """
     size = board.size()
     clauses = []
     variables = {}
-
-    # TODO
+    # TODO: DEFINE VARIABLES & CLAUSES
 
     return clauses, variables, size
 

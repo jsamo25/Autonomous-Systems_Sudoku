@@ -1,7 +1,13 @@
+## Minisat installation for windows
 
-# Autonomous Systems - Lab 2
+download Cygwin [USE 32- (even for 64-bits machines)]: https://cygwin.com/install.html
+download the pre-compiled binary: MiniSat_v1.14_cygwin from: http://minisat.se/MiniSat.html
+follow the instructions listed at: http://web.cecs.pdx.edu/~hook/logicw11/Assignments/MinisatOnWindows.html
 
-# Installing a SAT solver
+
+## Autonomous Systems - Lab 2
+
+## Installing a SAT solver
 
 You can install any of the SAT solvers available from the SAT competitions 
 <http://www.satcompetition.org/>.
