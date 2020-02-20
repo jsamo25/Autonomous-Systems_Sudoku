@@ -6,7 +6,9 @@ import math
 import sys
 
 from utils import save_dimacs_cnf, solve
+from itertools import combinations
 
+#run in terminal: python sudoku.py -c .......1.4.........2...........5.4.7..8...3....1.9....3..4..2...5.1........8.6...
 
 def parse_arguments(argv):
     parser = argparse.ArgumentParser(description='Solve Sudoku problems.')
@@ -31,26 +33,78 @@ def compute_solution(sat_assignment, variables, size):
     # TODO: Map the SAT assignment back into a Sudoku solution
     return solution
 
+from pdb import set_trace
+
 def generate_theory(board, verbose):
     """ Generate the propositional theory that corresponds to the given board. """
     size = board.size()
     clauses = []
     variables = {}
+
     # TODO: DEFINE VARIABLES & CLAUSES
+
+    def transform_literal(literal):
+        lista = []
+        for lit in literal:
+            lista.append(lit[0]*81 + lit[1]*9 + lit[2])
+
+        return lista
+
+    def exactly_one(literals):
+
+        clauses = [transform_literal(literals)]
+
+        for C in combinations(literals, 2):
+            clauses += [(-1*(C[0][0]*81 + C[0][1]*9 + C[0][2]),
+                         -1*(C[1][0]*81 + C[1][1]*9 + C[1][2]))]
+        return clauses
+
+    # All the variables we need: each cell has one of the 9 digits
+    lits = []
+    for i in range(9):
+        line = []
+        for j in range(9):
+            column = []
+            for k in range(9):
+                column.append(((i, j, k)))
+            line.append(column)
+        lits.append(line)
+    # Set of constraints #1: a cell has only one value.
+    for i in range(9):
+        for j in range(9):
+            clauses += exactly_one(lits[i][j])
+    # Set of constraints #2: each value is used only once in a row.
+    for j in range(9):
+        for k in range(9):
+            clauses += exactly_one([lits[i][j][k] for i in range(9)])
+    # Set of constraints #3: each value used exactly once in each column:
+    for i in range(9):
+        for k in range(9):
+            clauses += exactly_one([lits[i][j][k] for j in range(9)])
+    # Set of constraints #4: each value used exactly once in each 3x3 grid.
+    for x in range(3):
+        for y in range(3):
+            for k in range(9):
+                grid_cells = []
+                for a in range(3):
+                    for b in range(3):
+                        grid_cells.append(lits[3 * x + a][3 * y + b][k])
+                clauses += exactly_one(grid_cells)
 
     return clauses, variables, size
 
-
 def count_number_solutions(board, verbose=False):
     count = 0
-
     # TODO
+    clauses, variables, size = generate_theory(board, verbose)
+    print(clauses)
 
     print(f'Number of solutions: {count}')
 
 
 def find_one_solution(board, verbose=False):
     clauses, variables, size = generate_theory(board, verbose)
+    print(clauses)
     return solve_sat_problem(clauses, "theory.cnf", size, variables, verbose)
 
 
