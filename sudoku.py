@@ -7,8 +7,10 @@ import sys
 
 from utils import save_dimacs_cnf, solve
 from itertools import combinations
+from pdb import set_trace
 
 #run in terminal: python sudoku.py -c .......1.4.........2...........5.4.7..8...3....1.9....3..4..2...5.1........8.6...
+#run in terminal: python sudoku.py .......1.4.........2...........5.4.7..8...3....1.9....3..4..2...5.1........8.6...
 
 def parse_arguments(argv):
     parser = argparse.ArgumentParser(description='Solve Sudoku problems.')
@@ -31,9 +33,17 @@ def print_solution(solution):
 def compute_solution(sat_assignment, variables, size):
     solution = []
     # TODO: Map the SAT assignment back into a Sudoku solution
+
+    for key, value in sat_assignment.items():
+        if (value):
+            residual = key%9
+            if(residual == 0):
+                residual =9
+            solution.append((residual))
+
     return solution
 
-from pdb import set_trace
+
 
 def generate_theory(board, verbose):
     """ Generate the propositional theory that corresponds to the given board. """
@@ -42,7 +52,6 @@ def generate_theory(board, verbose):
     variables = {}
 
     # TODO: DEFINE VARIABLES & CLAUSES
-
     def transform_literal(literal):
         lista = []
         for lit in literal:
