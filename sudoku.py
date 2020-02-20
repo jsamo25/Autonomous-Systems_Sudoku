@@ -46,8 +46,7 @@ def generate_theory(board, verbose):
     def transform_literal(literal):
         lista = []
         for lit in literal:
-            lista.append(lit[0]*81 + lit[1]*9 + lit[2])
-
+            lista.append(lit[0]*81+1 + lit[1]*9 + lit[2])
         return lista
 
     def exactly_one(literals):
@@ -55,28 +54,30 @@ def generate_theory(board, verbose):
         clauses = [transform_literal(literals)]
 
         for C in combinations(literals, 2):
-            clauses += [(-1*(C[0][0]*81 + C[0][1]*9 + C[0][2]),
-                         -1*(C[1][0]*81 + C[1][1]*9 + C[1][2]))]
+            clauses += [[-1*(C[0][0]*81 + C[0][1]*9 + C[0][2] + 1),
+                         -1*(C[1][0]*81 + C[1][1]*9 + C[1][2] + 1)]]
         return clauses
 
     # All the variables we need: each cell has one of the 9 digits
     lits = []
-    for i in range(9):
+
+    for i in range (9):
         line = []
-        for j in range(9):
+        for j in range (9):
             column = []
-            for k in range(9):
-                column.append(((i, j, k)))
+            for k in range (9):
+                column.append((i, j, k))
             line.append(column)
         lits.append(line)
+
     # Set of constraints #1: a cell has only one value.
-    for i in range(9):
-        for j in range(9):
+    for i in range (9):
+        for j in range (9):
             clauses += exactly_one(lits[i][j])
     # Set of constraints #2: each value is used only once in a row.
     for j in range(9):
         for k in range(9):
-            clauses += exactly_one([lits[i][j][k] for i in range(9)])
+            clauses += exactly_one([lits[i][j][k] for i in range (9)])
     # Set of constraints #3: each value used exactly once in each column:
     for i in range(9):
         for k in range(9):
@@ -90,6 +91,8 @@ def generate_theory(board, verbose):
                     for b in range(3):
                         grid_cells.append(lits[3 * x + a][3 * y + b][k])
                 clauses += exactly_one(grid_cells)
+
+    variables = lits
 
     return clauses, variables, size
 
