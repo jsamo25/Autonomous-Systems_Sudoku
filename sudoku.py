@@ -46,7 +46,7 @@ def generate_theory(board, verbose):
     def transform_literal(literal):
         lista = []
         for lit in literal:
-            lista.append(lit[0]*81+1 + lit[1]*9 + lit[2])
+            lista.append(lit[0]*81 + lit[1]*9 + lit[2] + 1)
         return lista
 
     def exactly_one(literals):
@@ -99,15 +99,12 @@ def generate_theory(board, verbose):
 def count_number_solutions(board, verbose=False):
     count = 0
     # TODO
-    clauses, variables, size = generate_theory(board, verbose)
-    print(clauses)
 
     print(f'Number of solutions: {count}')
 
 
 def find_one_solution(board, verbose=False):
     clauses, variables, size = generate_theory(board, verbose)
-    print(clauses)
     return solve_sat_problem(clauses, "theory.cnf", size, variables, verbose)
 
 
@@ -158,7 +155,6 @@ class Board(object):
             print(" ".join(map(str, row)))
             if (i + 1) % 3 == 0:
                 print("")  # Just an empty line
-
 
 def main(argv):
     args = parse_arguments(argv)
