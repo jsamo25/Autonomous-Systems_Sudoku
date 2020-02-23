@@ -9,9 +9,9 @@ from utils import save_dimacs_cnf, solve
 from itertools import combinations
 from pdb import set_trace
 
-#run in terminal: python sudoku.py -c .......1.4.........2...........5.4.7..8...3....1.9....3..4..2...5.1........8.6...
-#run in terminal: python sudoku.py .......1.4.........2...........5.4.7..8...3....1.9....3..4..2...5.1........8.6...
-
+#python sudoku.py -c .......1.4.........2...........5.4.7..8...3....1.9....3..4..2...5.1........8.6...
+#python sudoku.py .......1.4.........2...........5.4.7..8...3....1.9....3..4..2...5.1........8.6...
+#python sudoku.py -c .....54..........8.8.19....3....1.6........34....6817.2.4...6.39......2.53.2.....
 def parse_arguments(argv):
     parser = argparse.ArgumentParser(description='Solve Sudoku problems.')
     parser.add_argument("board", help="A string encoding the Sudoku board, with all rows concatenated,"
@@ -29,37 +29,32 @@ def print_solution(solution):
     print('Solution in board form:')
     Board(solution).print()
 
-
 def compute_solution(sat_assignment, variables, size):
     solution = []
     # TODO: Map the SAT assignment back into a Sudoku solution
-
     for key, value in sat_assignment.items():
         if (value):
             residual = key%9
             if(residual == 0):
                 residual =9
             solution.append((residual))
-
     return solution
-
-
 
 def generate_theory(board, verbose):
     """ Generate the propositional theory that corresponds to the given board. """
     size = board.size()
     clauses = []
-    variables = {}
+    variables = [] #from dict to list
 
     # TODO: DEFINE VARIABLES & CLAUSES
+    #LITERAL DEFINITION
     def transform_literal(literal):
         lista = []
         for lit in literal:
             lista.append(lit[0]*81 + lit[1]*9 + lit[2] + 1)
         return lista
-
+    #ONLY ONE VALUE
     def exactly_one(literals):
-
         clauses = [transform_literal(literals)]
 
         for C in combinations(literals, 2):
@@ -67,9 +62,7 @@ def generate_theory(board, verbose):
                          -1*(C[1][0]*81 + C[1][1]*9 + C[1][2] + 1)]]
         return clauses
 
-    # All the variables we need: each cell has one of the 9 digits
-    lits = []
-
+    # Variables definition
     for i in range (9):
         line = []
         for j in range (9):
@@ -77,45 +70,66 @@ def generate_theory(board, verbose):
             for k in range (9):
                 column.append((i, j, k))
             line.append(column)
-        lits.append(line)
+        variables.append(line)
 
-    # Set of constraints #1: a cell has only one value.
+    #Constraint #1: a cell has one value only
     for i in range (9):
         for j in range (9):
-            clauses += exactly_one(lits[i][j])
-    # Set of constraints #2: each value is used only once in a row.
+            clauses += exactly_one(variables[i][j])
+    #Constraint #2: one value in row
     for j in range(9):
         for k in range(9):
-            clauses += exactly_one([lits[i][j][k] for i in range (9)])
-    # Set of constraints #3: each value used exactly once in each column:
+            clauses += exactly_one([variables[i][j][k] for i in range (9)])
+    #Constraint #3: one value in column
     for i in range(9):
         for k in range(9):
-            clauses += exactly_one([lits[i][j][k] for j in range(9)])
-    # Set of constraints #4: each value used exactly once in each 3x3 grid.
+            clauses += exactly_one([variables[i][j][k] for j in range(9)])
+    #Constraint #4: one vlaue in each 3x3 grid.
     for x in range(3):
         for y in range(3):
             for k in range(9):
                 grid_cells = []
                 for a in range(3):
                     for b in range(3):
-                        grid_cells.append(lits[3 * x + a][3 * y + b][k])
+                        grid_cells.append(variables[3 * x + a][3 * y + b][k])
                 clauses += exactly_one(grid_cells)
-
-    variables = lits
 
     return clauses, variables, size
 
 def count_number_solutions(board, verbose=False):
     count = 0
     # TODO
+    clauses, variables, size = generate_theory(board, verbose)
+    sat_assignment=solve_sat_problem(clauses=clauses, filename="theory.cnf",size = size, variables = variables, verbose = verbose)
+    # while sat_assignment is not None:
+    #     count +=1
+    #     clauses.append(constraint(sat_assignment))
+    #     sat_assignment=solve_sat_problem(clauses, "theory.cnf",size = size, variables = variables, verbose = verbose)
+    #     solution = compute_solution(sat_assignment, variables=variables, size=size)
+    #     set_trace()
+    while sat_assignment is not None:
+        count += 1
+        constraint, clauses_extend = [], []
+        for i in range (len(sat_assignment)):
+            if (sat_assignment[i] is True):
+                constraint += [-1*i]
+        clauses_extend.append(constraint)
+        sat_assignment = solve_sat_problem(clauses=clauses_extend, filename="theory.cnf", size=size, variables= variables, verbose=verbose)
 
     print(f'Number of solutions: {count}')
 
+def constraint(sat_assignment):
+    new_clause = []
+    for literal, value in enumerate(sat_assignment):
+        if literal == 0:
+            continue
+        new_literal = -literal if value else literal
+        new_clause.append(new_literal)
+    return new_clause
 
 def find_one_solution(board, verbose=False):
     clauses, variables, size = generate_theory(board, verbose)
     return solve_sat_problem(clauses, "theory.cnf", size, variables, verbose)
-
 
 def solve_sat_problem(clauses, filename, size, variables, verbose):
     save_dimacs_cnf(variables, clauses, filename, verbose)
